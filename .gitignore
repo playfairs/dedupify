@@ -7,6 +7,7 @@
 venv/
 .venv/
 .venv
+tests/
 
 # Python cache files
 __pycache__/

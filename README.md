@@ -1,85 +1,234 @@
-# Playlist Sanitizer (Kills 99.9% of Duplicate Songs)
+# Dedupify
 
-Hi there :3
+A modern Spotify playlist deduplication tool that removes duplicate tracks using exact, normalized, and fuzzy matching algorithms.
 
-# Setup
+## Installation
 
-## Clone the Repository
+### Prerequisites
 
-```Bash
-git clone git@github.com:playfairs/playlist-sanitizer.git
+- Python 3.10 or higher
+- Spotify Developer account
+
+### Setup with uv (Recommended)
+
+[uv](https://github.com/astral-sh/uv) is an extremely fast Python package and project manager, written in Rust.
+
+1. Clone the repository:
+```bash
+git clone https://github.com/playfairs/dedupify.git
+cd dedupify
 ```
 
-## cd into the directory
-
-```Bash
-cd playlist-sanitizer
+2. Install uv (if not already installed):
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-## Create an Application and .env file
-
-In the .env file paste the following
-
-```
-CLIENT_ID="YOUR_CLIENT_ID" # Replace this with your client id
-CLIENT_SECRET="YOUR_CLIENT_SECRET" # Replace this with your client secret
-REDIRECT_URL="https://google.com" # Replace this with whatever redirect URL you want to use
+on Windows:
+```powershell  
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-If you don't know how to get a Client ID or Client Secret, go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-Then create an Application, put in the Name and Description, the Redirect URL has to be the same as in the .env file, and for the API select "Web API", agree to the Terms and continue.
-
-
-## Create and Active a Virtual Environemnt
-
-```Bash
-python -m venv "venv"
-source bin/venv/activate
+3. Install dependencies with uv:
+```bash
+uv sync
 ```
 
-### Or
-
-```Bash
-python3 -m venv "venv"
-source bin/venv/activate
+4. Run the CLI with uv:
+```bash
+uv run dedupify --help
 ```
 
-## Then install the requirements
+### Setup with pip (Traditional)
 
-```Bash
+1. Clone the repository:
+```bash
+git clone https://github.com/playfairs/dedupify.git
+cd dedupify
+```
+
+2. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
 pip install -r requirements.txt
 ```
 
-### Or
-
-```Bash
-pip3 install -r requirements.txt
+4. Install the package in editable mode:
+```bash
+pip install -e .
 ```
 
-## Then run the script
+### Spotify Application Setup
 
-```Bash
-python src/main.py
+1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+2. Create a new application
+3. Set the redirect URI to: `http://localhost:8888/callback`
+4. Copy your Client ID and Client Secret
+
+4. Create a `.env` file in the project root:
+```bash
+cp .env.example .env
 ```
 
-### Or
-
-```Bash
-python3 src/main.py
+5. Edit `.env` with your credentials:
+```env
+CLIENT_ID=your_spotify_client_id
+CLIENT_SECRET=your_spotify_client_secret
+REDIRECT_URL=http://localhost:8888/callback
 ```
 
-## Once the script is running, go to your select playlist, paste the Playlist ID amd hit enter.
+## Usage
 
-For the Playlist ID, copy the Playlist URL, then copy the array of numbers and letters after open.spotify.com/playlist/
+### CLI Commands
 
-For example
+The tool provides three main commands:
 
-https://open.spotify.com/playlist/3H02Sd7T8xo5I6w5mONk9F?si=cbfcec684f23452f
+#### Purge Duplicates
 
-This Playlists ID is 3H02Sd7T8xo5I6w5mONk9F, so that's what you would paste into the terminal, and it would go from that.
+Remove duplicate tracks from a playlist:
 
-## Lastly, put the Redirect URL Code in the terminal
+### Running with uv
 
-Once you put the Playlist ID in the terminal, it will then ask you to put in the URL or code of the Website it redirected you to
-Copy everything after "?code=" and paste that in the terminal, you should only need to do this once.
-Once you do that, everything should work from there :3
+```bash
+uv run dedupify purge <playlist_url_or_id>
+uv run dedupify analyze <playlist_url_or_id>
+uv run dedupify report <playlist_url_or_id>
+```
+
+### Running with pip (after `pip install -e .`)
+
+```bash
+dedupify purge <playlist_url_or_id>
+dedupify analyze <playlist_url_or_id>
+dedupify report <playlist_url_or_id>
+```
+
+Options:
+- `--fuzzy`: Enable fuzzy matching
+- `--fuzzy-threshold`: Set fuzzy match threshold (0-100, default: 85)
+- `--backup/--no-backup`: Create backup before purging (default: enabled)
+- `--dry-run`: Show changes without applying them
+- `--verbose, -v`: Enable verbose logging
+
+Examples:
+```bash
+dedupify purge 37i9dQZF1DXcBWIGoYBM5M
+
+dedupify purge 37i9dQZF1DXcBWIGoYBM5M --fuzzy
+
+dedupify purge 37i9dQZF1DXcBWIGoYBM5M --dry-run
+
+dedupify purge 37i9dQZF1DXcBWIGoYBM5M --fuzzy --fuzzy-threshold 90
+```
+
+#### Analyze Playlist
+
+Analyze a playlist for duplicates without modifying it:
+
+```bash
+dedupify analyze <playlist_url_or_id>
+```
+
+Options:
+- `--fuzzy`: Enable fuzzy matching
+- `--fuzzy-threshold`: Set fuzzy match threshold
+- `--verbose, -v`: Enable verbose logging
+
+Example:
+```bash
+dedupify analyze 37i9dQZF1DXcBWIGoYBM5M --fuzzy
+```
+
+#### Generate Report
+
+Generate a detailed duplicate report:
+
+```bash
+dedupify report <playlist_url_or_id>
+```
+
+Options:
+- `--fuzzy`: Enable fuzzy matching
+- `--fuzzy-threshold`: Set fuzzy match threshold
+- `--output, -o`: Output file (default: stdout)
+- `--verbose, -v`: Enable verbose logging
+
+Examples:
+```bash
+dedupify report 37i9dQZF1DXcBWIGoYBM5M
+
+dedupify report 37i9dQZF1DXcBWIGoYBM5M -o duplicates.txt
+```
+
+### Finding Your Playlist ID
+
+You can use either the full Spotify URL or just the playlist ID:
+
+**Full URL:**
+```
+https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M?si=abc123
+```
+
+**Playlist ID only:**
+```
+37i9dQZF1DXcBWIGoYBM5M
+```
+
+## Development
+
+### Running Tests
+
+### Running with uv
+
+```bash
+uv run pytest
+```
+
+### Running with pip
+
+```bash
+pytest
+```
+
+### Code Formatting
+
+### Running with uv
+
+```bash
+uv run black src/ tests/
+uv run ruff check src/ tests/
+```
+
+### Running with pip
+
+```bash
+black src/ tests/
+ruff check src/ tests/
+```
+
+### Type Checking
+
+### Running with uv
+
+```bash
+uv run mypy src/
+```
+
+### Running with pip
+
+```bash
+mypy src/
+```
+
+## How It Works
+
+1. **Exact Matching**: Identifies duplicates by Spotify track ID (100% accurate)
+2. **Normalized Matching**: Compares track names after removing common suffixes like "- Remastered", "(feat. ...)", etc.
+3. **Fuzzy Matching**: Uses RapidFuzz to find similar tracks with configurable similarity threshold
+
+The tool applies matching strategies in order: exact → normalized → fuzzy. Each strategy only processes tracks not already identified as duplicates by previous strategies.
